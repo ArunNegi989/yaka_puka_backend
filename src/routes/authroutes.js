@@ -11,54 +11,23 @@ import {
   deleteUser
 } from '../controllers/authcontroller.js'
 
-import protect from '../middlewares/authmiddleware.js'
-import adminOnly from '../middlewares/rolemiddleware.js'
-
 const router = express.Router()
 
-/* ───────────────── PUBLIC ROUTES ───────────────── */
-
+/* AUTH */
 router.post('/register', registerUser)
-
 router.post('/login', loginUser)
 
+/* ADMIN */
 router.get('/check-admin', checkAdminExists)
 
-/* ───────────────── ADMIN CRUD ROUTES ───────────────── */
+router.post('/admin/create-user', createUserByAdmin)
 
-router.post(
-  '/admin/create-user',
-  protect,
-  adminOnly,
-  createUserByAdmin
-)
+router.get('/admin/users', getAllUsers)
 
-router.get(
-  '/admin/users',
-  protect,
-  adminOnly,
-  getAllUsers
-)
+router.get('/admin/user/:id', getSingleUser)
 
-router.get(
-  '/admin/users/:id',
-  protect,
-  adminOnly,
-  getSingleUser
-)
+router.put('/admin/user/:id', updateUser)
 
-router.put(
-  '/admin/users/:id',
-  protect,
-  adminOnly,
-  updateUser
-)
-
-router.delete(
-  '/admin/users/:id',
-  protect,
-  adminOnly,
-  deleteUser
-)
+router.delete('/admin/user/:id', deleteUser)
 
 export default router
