@@ -6,13 +6,7 @@ import generateToken from '../utils/generateToken.js'
 
 export const registerUser = async (req, res) => {
   try {
-    const {
-      fname,
-      lname,
-      email,
-      mobile,
-      password
-    } = req.body
+    const { fname, lname, email, mobile, password } = req.body
 
     const existingUser = await User.findOne({ email })
 
@@ -33,11 +27,14 @@ export const registerUser = async (req, res) => {
       password: hashedPassword
     })
 
+    // ✅ FIX: Password response mein se hata do
+    const { password: _, ...safeUser } = user.toObject()
+
     res.status(201).json({
       success: true,
       message: 'User Registered Successfully',
       token: generateToken(user._id, user.role),
-      user
+      user: safeUser
     })
 
   } catch (error) {
@@ -54,7 +51,8 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body
 
-    const user = await User.findOne({ email })
+    // ✅ FIX: role field explicitly select karo (agar koi issue ho toh)
+    const user = await User.findOne({ email }).select('+password +role')
 
     if (!user) {
       return res.status(400).json({
@@ -63,10 +61,7 @@ export const loginUser = async (req, res) => {
       })
     }
 
-    const isMatch = await bcrypt.compare(
-      password,
-      user.password
-    )
+    const isMatch = await bcrypt.compare(password, user.password)
 
     if (!isMatch) {
       return res.status(400).json({
@@ -75,11 +70,14 @@ export const loginUser = async (req, res) => {
       })
     }
 
+    // ✅ FIX: Password response mein se hata do — role zaroor include karo
+    const { password: _, ...safeUser } = user.toObject()
+
     res.status(200).json({
       success: true,
       message: 'Login Successful',
       token: generateToken(user._id, user.role),
-      user
+      user: safeUser   // ← role included, password excluded
     })
 
   } catch (error) {
@@ -94,9 +92,7 @@ export const loginUser = async (req, res) => {
 
 export const checkAdminExists = async (req, res) => {
   try {
-    const admin = await User.findOne({
-      role: 'admin'
-    })
+    const admin = await User.findOne({ role: 'admin' })
 
     res.status(200).json({
       success: true,
@@ -115,13 +111,7 @@ export const checkAdminExists = async (req, res) => {
 
 export const createUserByAdmin = async (req, res) => {
   try {
-    const {
-      fname,
-      lname,
-      email,
-      mobile,
-      password
-    } = req.body
+    const { fname, lname, email, mobile, password } = req.body
 
     const existingUser = await User.findOne({ email })
 
@@ -143,10 +133,13 @@ export const createUserByAdmin = async (req, res) => {
       role: 'user'
     })
 
+    // ✅ FIX: Password exclude karo
+    const { password: _, ...safeUser } = user.toObject()
+
     res.status(201).json({
       success: true,
       message: 'User created successfully',
-      user
+      user: safeUser
     })
 
   } catch (error) {
@@ -161,9 +154,7 @@ export const createUserByAdmin = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    const users = await User.find({
-      role: 'user'
-    })
+    const users = await User.find({ role: 'user' })
       .select('-password')
       .sort({ createdAt: -1 })
 
@@ -184,8 +175,7 @@ export const getAllUsers = async (req, res) => {
 
 export const getSingleUser = async (req, res) => {
   try {
-    const user = await User.findById(req.params.id)
-      .select('-password')
+    const user = await User.findById(req.params.id).select('-password')
 
     if (!user) {
       return res.status(404).json({
@@ -207,17 +197,11 @@ export const getSingleUser = async (req, res) => {
   }
 }
 
-
 /* ───────────────── UPDATE USER ───────────────── */
 
 export const updateUser = async (req, res) => {
   try {
-    const {
-      fname,
-      lname,
-      mobile,
-      password        // optional — only if admin wants to change password
-    } = req.body
+    const { fname, lname, mobile, password } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -228,23 +212,23 @@ export const updateUser = async (req, res) => {
       })
     }
 
-    // Update allowed fields (email is intentionally excluded)
     user.fname  = fname  || user.fname
     user.lname  = lname  || user.lname
     user.mobile = mobile || user.mobile
 
-    // Update password only if provided
     if (password) {
-      const bcrypt = await import('bcryptjs')
       user.password = await bcrypt.hash(password, 10)
     }
 
     const updatedUser = await user.save()
 
+    // ✅ FIX: Password exclude karo
+    const { password: _, ...safeUser } = updatedUser.toObject()
+
     res.status(200).json({
       success: true,
       message: 'User updated successfully',
-      user: updatedUser
+      user: safeUser
     })
 
   } catch (error) {
@@ -254,6 +238,7 @@ export const updateUser = async (req, res) => {
     })
   }
 }
+
 /* ───────────────── DELETE USER ───────────────── */
 
 export const deleteUser = async (req, res) => {
