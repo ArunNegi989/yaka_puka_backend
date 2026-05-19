@@ -2,9 +2,8 @@ import express from 'express'
 import dotenv from 'dotenv'
 import cors from 'cors'
 import morgan from 'morgan'
-
-import connectDB from './config/db.js'
-import routes from './routes/index.js'
+import connectDB from './src/config/db.js'
+import routes from './src/routes/index.js'
 
 dotenv.config()
 

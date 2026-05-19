@@ -207,6 +207,7 @@ export const getSingleUser = async (req, res) => {
   }
 }
 
+
 /* ───────────────── UPDATE USER ───────────────── */
 
 export const updateUser = async (req, res) => {
@@ -214,8 +215,8 @@ export const updateUser = async (req, res) => {
     const {
       fname,
       lname,
-      email,
-      mobile
+      mobile,
+      password        // optional — only if admin wants to change password
     } = req.body
 
     const user = await User.findById(req.params.id)
@@ -227,10 +228,16 @@ export const updateUser = async (req, res) => {
       })
     }
 
-    user.fname = fname || user.fname
-    user.lname = lname || user.lname
-    user.email = email || user.email
+    // Update allowed fields (email is intentionally excluded)
+    user.fname  = fname  || user.fname
+    user.lname  = lname  || user.lname
     user.mobile = mobile || user.mobile
+
+    // Update password only if provided
+    if (password) {
+      const bcrypt = await import('bcryptjs')
+      user.password = await bcrypt.hash(password, 10)
+    }
 
     const updatedUser = await user.save()
 
@@ -247,7 +254,6 @@ export const updateUser = async (req, res) => {
     })
   }
 }
-
 /* ───────────────── DELETE USER ───────────────── */
 
 export const deleteUser = async (req, res) => {
