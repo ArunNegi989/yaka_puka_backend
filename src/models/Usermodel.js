@@ -4,28 +4,36 @@ const userSchema = new mongoose.Schema(
   {
     fname: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
 
     lname: {
       type: String,
-      required: true
+      required: true,
+      trim: true
     },
 
     email: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
+      lowercase: true,
+      trim: true
     },
 
     mobile: {
       type: String,
-      required: false
+      required: false,
+      trim: true
     },
 
     password: {
       type: String,
-      required: true
+      required: true,
+      // ✅ FIX: select:false — password kabhi bhi response mein accidentally nahi aayega
+      // Controller mein explicitly .select('+password') likhna padega jab chahiye
+      select: false
     },
 
     role: {

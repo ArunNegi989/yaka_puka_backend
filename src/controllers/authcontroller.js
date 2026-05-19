@@ -8,8 +8,15 @@ export const registerUser = async (req, res) => {
   try {
     const { fname, lname, email, mobile, password } = req.body
 
-    const existingUser = await User.findOne({ email })
+    // Basic validation
+    if (!fname || !lname || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'fname, lname, email aur password required hain'
+      })
+    }
 
+    const existingUser = await User.findOne({ email })
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -27,8 +34,8 @@ export const registerUser = async (req, res) => {
       password: hashedPassword
     })
 
-    // ✅ FIX: Password response mein se hata do
-    const { password: _, ...safeUser } = user.toObject()
+    // ✅ password select:false hai — .toObject() safe hai, password nahi aayega
+    const safeUser = user.toObject()
 
     res.status(201).json({
       success: true,
@@ -51,8 +58,16 @@ export const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body
 
-    // ✅ FIX: role field explicitly select karo (agar koi issue ho toh)
-    const user = await User.findOne({ email }).select('+password +role')
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email aur password required hain'
+      })
+    }
+
+    // ✅ FIX: select:false hai model mein, isliye +password explicitly chahiye
+    // role hamesha aata hai kyunki usp select:false nahi hai
+    const user = await User.findOne({ email }).select('+password')
 
     if (!user) {
       return res.status(400).json({
@@ -62,7 +77,6 @@ export const loginUser = async (req, res) => {
     }
 
     const isMatch = await bcrypt.compare(password, user.password)
-
     if (!isMatch) {
       return res.status(400).json({
         success: false,
@@ -70,14 +84,16 @@ export const loginUser = async (req, res) => {
       })
     }
 
-    // ✅ FIX: Password response mein se hata do — role zaroor include karo
-    const { password: _, ...safeUser } = user.toObject()
+    // ✅ FIX: user.toObject() ke baad password manually delete karo
+    // (select:false wala .toObject() mein aata hai kyunki humne explicitly select kiya tha)
+    const userObj = user.toObject()
+    delete userObj.password
 
     res.status(200).json({
       success: true,
       message: 'Login Successful',
       token: generateToken(user._id, user.role),
-      user: safeUser   // ← role included, password excluded
+      user: userObj   // ← role included ✅, password excluded ✅
     })
 
   } catch (error) {
@@ -113,8 +129,14 @@ export const createUserByAdmin = async (req, res) => {
   try {
     const { fname, lname, email, mobile, password } = req.body
 
-    const existingUser = await User.findOne({ email })
+    if (!fname || !lname || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'fname, lname, email aur password required hain'
+      })
+    }
 
+    const existingUser = await User.findOne({ email })
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -133,8 +155,8 @@ export const createUserByAdmin = async (req, res) => {
       role: 'user'
     })
 
-    // ✅ FIX: Password exclude karo
-    const { password: _, ...safeUser } = user.toObject()
+    const safeUser = user.toObject()
+    // select:false hai toh .toObject() mein password nahi aayega — safe hai
 
     res.status(201).json({
       success: true,
@@ -154,6 +176,7 @@ export const createUserByAdmin = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
+    // select:false hai toh -password likhne ki zaroorat nahi — phir bhi likhte hain safety ke liye
     const users = await User.find({ role: 'user' })
       .select('-password')
       .sort({ createdAt: -1 })
@@ -203,7 +226,8 @@ export const updateUser = async (req, res) => {
   try {
     const { fname, lname, mobile, password } = req.body
 
-    const user = await User.findById(req.params.id)
+    // Password update ke liye explicitly select karna padega
+    const user = await User.findById(req.params.id).select('+password')
 
     if (!user) {
       return res.status(404).json({
@@ -222,13 +246,13 @@ export const updateUser = async (req, res) => {
 
     const updatedUser = await user.save()
 
-    // ✅ FIX: Password exclude karo
-    const { password: _, ...safeUser } = updatedUser.toObject()
+    const userObj = updatedUser.toObject()
+    delete userObj.password
 
     res.status(200).json({
       success: true,
       message: 'User updated successfully',
-      user: safeUser
+      user: userObj
     })
 
   } catch (error) {
