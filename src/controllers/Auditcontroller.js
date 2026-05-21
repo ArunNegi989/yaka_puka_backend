@@ -9,6 +9,7 @@ export const submitAudit = async (req, res) => {
       auditorName,
       auditorEmail,
       sections,
+      customerFeedback,       // ← name / mobile / company / otherComments
       overallScore,
       earnedMarks,
       maxMarks,
@@ -28,8 +29,9 @@ export const submitAudit = async (req, res) => {
 
     const submission = new AuditSubmission({
       auditorName,
-      auditorEmail: auditorEmail || '',
+      auditorEmail:     auditorEmail     || '',
       sections,
+      customerFeedback: customerFeedback || {},
       overallScore,
       earnedMarks,
       maxMarks,
