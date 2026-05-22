@@ -118,3 +118,17 @@ export const deleteAudit = async (req, res) => {
     return res.status(500).json({ message: 'Server error.' });
   }
 };
+
+// GET /api/audit/recent  — last 8 submissions
+export const getRecentAudits = async (req, res) => {
+  try {
+    const submissions = await AuditSubmission.find({})
+      .sort({ submittedAt: -1 })
+      .limit(8)
+      .select('auditorName auditorEmail overallScore ratingLabel submittedAt customerFeedback');
+    return res.json({ submissions });
+  } catch (err) {
+    console.error('Recent audits error:', err);
+    return res.status(500).json({ message: 'Server error.' });
+  }
+};
