@@ -22,7 +22,7 @@ const SlaQuestionSchema = new mongoose.Schema(
       type: Number,
       required: true,
       default: 100,
-      min: [1, "Max marks must be at least 1"],
+      min: [0, "Max marks must be at least 0"],
       max: [1000, "Max marks cannot exceed 1000"],
     },
     required: {
