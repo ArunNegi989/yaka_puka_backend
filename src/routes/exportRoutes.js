@@ -7,7 +7,7 @@ import {
   exportIndividual,
   exportOverall,
 } from "../controllers/Exportcontroller.js";
-import { exportDashboardPptx } from "../controllers/PptxExportController.js";
+import { exportDashboardPptx } from "../controllers/Pptxexportcontroller.js";
 
 const router = express.Router();
 
