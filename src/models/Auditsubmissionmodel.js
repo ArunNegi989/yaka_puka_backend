@@ -17,6 +17,7 @@ const ChecklistRowSchema = new mongoose.Schema(
     },
     points: { type: Number, required: true },          // 100 / 75 / 50 / 25 / 0
     remark: { type: String, default: '' },
+    maxMarks: { type: Number, required: true },        // ← NEW: max marks for this item
   },
   { _id: false }
 );
@@ -26,17 +27,19 @@ const ChecklistRowSchema = new mongoose.Schema(
 ───────────────────────────────────────────── */
 const SectionResultSchema = new mongoose.Schema(
   {
-    sectionId:    { type: Number, required: true },
-    sectionTitle: { type: String, required: true },
-    sectionIcon:  { type: String },
-    rows:         [ChecklistRowSchema],
-    sectionScore: { type: Number },
-    earnedPoints: { type: Number },
-    maxPoints:    { type: Number },
-    passCount:    { type: Number },
-    partialCount: { type: Number },
-    failCount:    { type: Number },
-    naCount:      { type: Number },
+    sectionId:         { type: Number, required: true },
+    sectionBackendId:  { type: String, default: '' },  // ← NEW: backend category ID for reference
+    sectionTitle:      { type: String, required: true },
+    sectionIcon:       { type: String },
+    sectionType:       { type: String, enum: ['checklist', 'feedback'], default: 'checklist' },  // ← NEW: section type
+    rows:              [ChecklistRowSchema],
+    sectionScore:      { type: Number },
+    earnedPoints:      { type: Number },
+    maxPoints:         { type: Number },
+    passCount:         { type: Number },
+    partialCount:      { type: Number },
+    failCount:         { type: Number },
+    naCount:           { type: Number },
   },
   { _id: false }
 );
@@ -49,6 +52,7 @@ const CustomerFeedbackInfoSchema = new mongoose.Schema(
     name:          { type: String, default: '' },
     mobile:        { type: String, default: '' },
     company:       { type: String, default: '' },
+    rating:        { type: Number, min: 0, max: 5, default: 0 },    // ← NEW: Star rating 1-5
     otherComments: { type: String, default: '' },
   },
   { _id: false }
@@ -66,10 +70,10 @@ const AuditSubmissionSchema = new mongoose.Schema(
     /* ── When ── */
     submittedAt: { type: Date, default: Date.now },
 
-    /* ── All 7 sections with every row ── */
+    /* ── All sections with every row ── */
     sections: [SectionResultSchema],
 
-    /* ── Customer feedback info (name / mobile / company) ── */
+    /* ── Customer feedback info (name / mobile / company / rating / otherComments) ── */
     customerFeedback: { type: CustomerFeedbackInfoSchema, default: () => ({}) },
 
     /* ── Aggregate totals ── */
@@ -83,14 +87,33 @@ const AuditSubmissionSchema = new mongoose.Schema(
     totalFail:     { type: Number },
     totalNA:       { type: Number },
 
+    /* ── NEW: Additional metrics for admin dashboard ── */
+    compliance:      { type: Number, default: 0 },        // ← Compliance percentage (same as overallScore)
+    scoredItems:     { type: Number, default: 0 },        // ← Items that have a status (not N.A.)
+    criticalFails:   { type: Number, default: 0 },        // ← Count of Fail + Average + Poor items
+    
     /* ── Rating band ── */
     ratingLabel:  { type: String },
     ratingAction: { type: String },
+
+    /* ── Period tracking for dashboard filtering ── */
+    year:         { type: Number },                        // ← For yearly aggregation
+    quarter:      { type: Number },                        // ← Q1, Q2, Q3, Q4
+    month:        { type: Number },                        // ← 1-12
+    week:         { type: Number },                        // ← ISO week number
+    date:         { type: Date, default: Date.now },       // ← Exact date
   },
   {
     timestamps: true,
     collection: 'audit_submissions',
   }
 );
+
+// Create indexes for dashboard filtering
+AuditSubmissionSchema.index({ overallScore: -1, submittedAt: -1 });  // For top ratings
+AuditSubmissionSchema.index({ year: 1, quarter: 1 });               // For quarterly view
+AuditSubmissionSchema.index({ year: 1, month: 1 });                 // For monthly view
+AuditSubmissionSchema.index({ year: 1, week: 1 });                  // For weekly view
+AuditSubmissionSchema.index({ submittedAt: -1 });                   // For recent
 
 export default mongoose.model('AuditSubmission', AuditSubmissionSchema);
