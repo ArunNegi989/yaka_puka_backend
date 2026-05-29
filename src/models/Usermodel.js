@@ -1,17 +1,17 @@
-import mongoose from 'mongoose'
+import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
     fname: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     lname: {
       type: String,
       required: true,
-      trim: true
+      trim: true,
     },
 
     email: {
@@ -19,34 +19,33 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
-      trim: true
+      trim: true,
     },
 
     mobile: {
       type: String,
       required: false,
-      trim: true
+      trim: true,
     },
 
     password: {
       type: String,
       required: true,
-      // ✅ FIX: select:false — password kabhi bhi response mein accidentally nahi aayega
-      // Controller mein explicitly .select('+password') likhna padega jab chahiye
-      select: false
+
+      select: false,
     },
 
     role: {
       type: String,
-      enum: ['user', 'admin'],
-      default: 'user'
-    }
+      enum: ["user", "admin"],
+      default: "user",
+    },
   },
   {
-    timestamps: true
-  }
-)
+    timestamps: true,
+  },
+);
 
-const User = mongoose.model('User', userSchema)
+const User = mongoose.model("User", userSchema);
 
-export default User
+export default User;

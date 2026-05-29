@@ -11,7 +11,6 @@ const router = express.Router()
 router.use('/auth',  authRoutes)
 router.use('/sla',   slaRoutes)
 
-// audit aur export dono ek hi /audit prefix ke andar
 const auditRouter = express.Router()
 auditRouter.use('/', auditRoutes)
 auditRouter.use('/', exportRoutes)

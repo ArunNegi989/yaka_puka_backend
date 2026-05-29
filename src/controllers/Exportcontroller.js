@@ -29,8 +29,6 @@ export async function exportIndividual(req, res) {
   }
 }
 
-// ── POST /audit/export/overall ───────────────────────────────────────────────
-// OPTION 1: DB se seedha fetch karta hai
 export async function exportOverall(req, res) {
   try {
     // Try DB first

@@ -31,7 +31,11 @@ export async function getCategoryById(req, res) {
   try {
     const category = await SlaCategory.findOne({ id: req.params.id }).lean();
     if (!category) {
-      return sendError(res, 404, `Category with id '${req.params.id}' not found`);
+      return sendError(
+        res,
+        404,
+        `Category with id '${req.params.id}' not found`,
+      );
     }
     return res.status(200).json(category);
   } catch (err) {
@@ -58,7 +62,11 @@ export async function createCategory(req, res) {
     // Check duplicate id
     const exists = await SlaCategory.findOne({ id: body.id });
     if (exists) {
-      return sendError(res, 409, `Category with id '${body.id}' already exists`);
+      return sendError(
+        res,
+        409,
+        `Category with id '${body.id}' already exists`,
+      );
     }
 
     const category = await SlaCategory.create(body);
@@ -94,13 +102,17 @@ export async function bulkReplaceCategories(req, res) {
         return sendError(res, 400, `Category at index ${i} is missing 'id'`);
       }
       if (!cat.title?.trim()) {
-        return sendError(res, 400, `Category at index ${i} (id: ${cat.id}) is missing 'title'`);
+        return sendError(
+          res,
+          400,
+          `Category at index ${i} (id: ${cat.id}) is missing 'title'`,
+        );
       }
       if (!["checklist", "feedback"].includes(cat.type)) {
         return sendError(
           res,
           400,
-          `Category '${cat.title}' has invalid type '${cat.type}'. Must be 'checklist' or 'feedback'`
+          `Category '${cat.title}' has invalid type '${cat.type}'. Must be 'checklist' or 'feedback'`,
         );
       }
 
@@ -111,7 +123,7 @@ export async function bulkReplaceCategories(req, res) {
             return sendError(
               res,
               400,
-              `Category '${cat.title}': question at index ${j} has empty text`
+              `Category '${cat.title}': question at index ${j} has empty text`,
             );
           }
         }
@@ -126,7 +138,7 @@ export async function bulkReplaceCategories(req, res) {
     if (payload.length > 0) {
       inserted = await SlaCategory.insertMany(
         payload.map((cat, i) => ({ ...cat, order: i })),
-        { ordered: true }
+        { ordered: true },
       );
     }
 
@@ -153,7 +165,7 @@ export async function updateCategory(req, res) {
     const updated = await SlaCategory.findOneAndUpdate(
       { id: req.params.id },
       { $set: req.body },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updated) {
@@ -201,7 +213,8 @@ export async function addQuestion(req, res) {
     const q = req.body;
 
     if (!q.id) return sendError(res, 400, "Question 'id' is required");
-    if (!q.text?.trim()) return sendError(res, 400, "Question 'text' is required");
+    if (!q.text?.trim())
+      return sendError(res, 400, "Question 'text' is required");
 
     const category = await SlaCategory.findOne({ id: req.params.id });
     if (!category) {
@@ -231,14 +244,19 @@ export async function deleteQuestion(req, res) {
     }
 
     const before = category.questions.length;
-    category.questions = category.questions.filter((q) => q.id !== req.params.qid);
+    category.questions = category.questions.filter(
+      (q) => q.id !== req.params.qid,
+    );
 
     if (category.questions.length === before) {
       return sendError(res, 404, `Question '${req.params.qid}' not found`);
     }
 
     // Re-order
-    category.questions = category.questions.map((q, i) => ({ ...q.toObject(), order: i }));
+    category.questions = category.questions.map((q, i) => ({
+      ...q.toObject(),
+      order: i,
+    }));
     await category.save();
 
     return res.status(200).json({ success: true, data: category });

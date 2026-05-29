@@ -64,9 +64,6 @@ export const loginUser = async (req, res) => {
         message: 'Email aur password required hain'
       })
     }
-
-    // ✅ FIX: select:false hai model mein, isliye +password explicitly chahiye
-    // role hamesha aata hai kyunki usp select:false nahi hai
     const user = await User.findOne({ email }).select('+password')
 
     if (!user) {
@@ -83,9 +80,6 @@ export const loginUser = async (req, res) => {
         message: 'Invalid Credentials'
       })
     }
-
-    // ✅ FIX: user.toObject() ke baad password manually delete karo
-    // (select:false wala .toObject() mein aata hai kyunki humne explicitly select kiya tha)
     const userObj = user.toObject()
     delete userObj.password
 
@@ -156,7 +150,6 @@ export const createUserByAdmin = async (req, res) => {
     })
 
     const safeUser = user.toObject()
-    // select:false hai toh .toObject() mein password nahi aayega — safe hai
 
     res.status(201).json({
       success: true,
@@ -176,7 +169,6 @@ export const createUserByAdmin = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   try {
-    // select:false hai toh -password likhne ki zaroorat nahi — phir bhi likhte hain safety ke liye
     const users = await User.find({ role: 'user' })
       .select('-password')
       .sort({ createdAt: -1 })
@@ -225,8 +217,6 @@ export const getSingleUser = async (req, res) => {
 export const updateUser = async (req, res) => {
   try {
     const { fname, lname, mobile, password } = req.body
-
-    // Password update ke liye explicitly select karna padega
     const user = await User.findById(req.params.id).select('+password')
 
     if (!user) {
